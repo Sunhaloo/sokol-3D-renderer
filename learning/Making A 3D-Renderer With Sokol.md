@@ -16,12 +16,15 @@ status: In-Progress
 		- [[#Setup Project Structure]]
 		- [[#Initialise Window]]
 		- [[#Deviating From Coding with Sphere]]
+		- [[#Initialise Graphics]]
+		- [[#Wait, What Are We Doing?]]
+		- [[#Going Back To It]]
 
 ---
 
 # What is Sokol?
 
-> [!INFO] Resource(s)
+> [!NOTE] Resource(s)
 > 
 > - Sokol GitHub Repository: https://github.com/floooh/sokol
 
@@ -309,7 +312,7 @@ Here are the interesting things that I keep seeing; therefore, making want to tr
 > 
 > > What's the worst that could happen... "*Famous Last Words*"
 
-> [!INFO]
+> [!NOTE]
 > > I am thoroughly going to use the help of Claude here for the Windows part because [Fuck Microsoft](https://www.youtube.com/watch?v=2zpCOYkdvTQ&t=22s)!
 > 
 > Okay, so apparently, and yes ( *what the fuck I am saying now... I need to take a break* ); Windows does support OpenGL so therefore, to compile and run our current `main.c` file, right now on Windows, we don't actually need to touch anything.
@@ -381,6 +384,184 @@ Here are all the steps that I took to create the GitHub Remote Repository:
 > # populate the `dependencies/sokol` repository
 > git submodule update --init
 > ```
+
+#### It Works!
+
+So booting in my Windows partition, cloning the repository... The program does indeed work **without** any changes made to the `main.c` file!
+
+> [!NOTE]
+> This could mean we might be able to code it entirely on Linux and simply *use it* on Windows.
+> 
+> > I think I should have used Sokol and [Dear ImGui](https://github.com/ocornut/imgui) instead for my mouse-c-py project...
+
+## Initialise Graphics
+
+We are now going to use the `sokol_gfx.h` **header file** which from what I see in the comments upon reading the first couple lines of it; its a "*simple 3D API wrapper*".
+
+So compared to our `sokol_app.h` file which is basically responsible for creating a **window** and basic **event handling**... `sokol_gfx.h` is going to be the one who puts *pixels* on the screen and actually talks to the GPU.
+
+> [!WARNING]
+> > Help is needed by `sokol_gfx.h`!
+> 
+> Given that we have already set up the GPU communication over at `sapp_run`. Here we are going to basically have to tell `sokol_gfx.h` about that *existing connection* that we made; which backend context is active ( *in our case `SOKOL_GLCORE`* ) and some pixel format.
+> 
+> Basically, we are going to have to setup the environment in such a way that its able to use the backend. Well to be able to do that, the developers have already created a helper function for this and it's call `sglue_environment` which does everything for us.
+> 
+> Hence to use it, we are also going to have to add the `sokol_glue.h` header file.
+
+- Therefore, to use it; simply include it at the top of our `main.c` file like so:
+
+```C
+// own the function implementation found in sokol's header file
+#define SOKOL_IMPL
+// Linux: using OpenGL's API to communicate with GPU
+#define SOKOL_GLCORE
+// NOTE: please read line 1154 of "our" `sokol_app.h` header file
+#define SOKOL_NO_ENTRY
+// include the sokol header file --> windowing and events
+#include "dependencies/sokol/sokol_app.h"
+// include the sokol header file --> simple GPU API wrapper - pixels, rendering
+#include "dependencies/sokol/sokol_gfx.h"
+// include the sokol header file --> helper functions for 'sokol_gfx.h' file
+#include "dependencies/sokol/sokol_glue.h"
+```
+
+> [!WARNING]
+> Changed `SOKOL_APP_IMPL` to `SOKOL_IMPL` as we have *everything* in there!
+
+- Update our `init` function for windowing and GPU rendering:
+
+```C
+// function related to `sapp_run` and `sapp_desc`
+void init(void) {
+  // function to handle initialisation for window system and GPU rendering
+
+  // initialise graphics for rendering ==> preparing memory stuff and pipelines
+  sg_setup(&(sg_desc){
+      // setup the environment ==> see line 5006 in 'sokol_gfx.h' for `struct`
+      .environment = sglue_environment()});
+};
+```
+
+- Update `cleanup` function so that we kill our graphics instance:
+
+> "*What is created my be destroyed*" Coding with Sphere.
+
+```C
+void cleanup(void) {
+  // function to cleanup resources at the end of our program
+
+  // shutdown / kill the instance of our sokol graphics
+  sg_shutdown();
+};
+```
+
+## Wait, What Are We Doing?
+
+> I think you can guess that I am not really into game development... Nor I have a single clue of what I am currently doing.
+
+
+> [!NOTE]
+> - StackOverflow: https://stackoverflow.com/questions/41077723/what-is-the-exact-meaning-for-renderer-in-programming
+> 
+> 
+> What is a renderer?
+> 
+> - The "drawing" part of "*drawing things on the screen*"
+> - Translate raw, low level code into "*pixels*" onto the screen
+> - "When you're writing a computer game, the "*renderer*" takes your **world state data** and makes all the calls to the GPU which eventually result in pixels appearing on your screen"
+> - Compiles shaders, calculate positioning and geometry
+
+> [!NOTE]
+> - Wikipedia: https://en.wikipedia.org/wiki/Shader
+> - Reddit Post: https://www.reddit.com/r/gamedev/comments/d2z616/can_someone_explain_exactly_what_are_shaders/
+> 
+> What is a shader?
+> 
+> - Operates on data in the graphics pipeline to control the rendering of an image
+> - They are GPU *programs* that runs on the GPU ( hardware )
+> - Basically think of going from a dot on a piece of paper to line, to a square, to a cube, to applying colours, to applying shadows, etc
+
+```mermaid
+flowchart LR
+    A[sapp_run starts] --> B[init — runs once]
+    B --> C[frame — runs every frame, forever]
+    C --> C
+    C --> D[cleanup — runs once, at the end]
+    E[event — runs whenever input happens] --> C
+```
+
+## Going Back To It
+
+### Program State
+
+- Create the following **global** structure at the top:
+
+```C
+// state stucture for rendering
+static struct {
+  // action performed during a render pass
+  sg_pass_action pass_action;
+} state;
+```
+
+- Update the state and change the background colour ( *done inside the `init` function* ):
+
+```C
+void init(void) {
+  // function to handle initialisation for window system and GPU rendering
+
+  // initialise graphics for rendering ==> preparing memory stuff and pipelines
+  sg_setup(&(sg_desc){
+      // setup the environment ==> see line 5006 in 'sokol_gfx.h' for `struct`
+      .environment = sglue_environment()});
+
+  // update the state
+  // INFO: again my formatter is really weird WTF is this?
+  state.pass_action =
+      (sg_pass_action){              // render pass to have colours
+                       .colors[0] = {// clean the screen from whatever we have
+                                     .load_action = SG_LOADACTION_CLEAR,
+                                     // change the colour
+                                     .clear_value = {
+                                         // red colour
+                                         0.35f,
+                                         // green colour
+                                         0.35f,
+                                         // blue colour
+                                         0.35f,
+                                         // opacity
+                                         1.0f,
+                                     }}};
+};
+
+```
+
+- Update the `frame` function:
+
+```C
+void frame(void) {
+  // function to display at each render state ==> called once every frame
+
+  // start the pass to display at each state
+  sg_begin_pass(
+      &(sg_pass){.action = state.pass_action, .swapchain = sglue_swapchain()});
+
+  // finish recording commands for this pass
+  sg_end_pass();
+
+  // submit / "write" all command to the GPU
+  sg_commit();
+};
+```
+
+> [!SUCCESS]
+> We should now see that we have a greying background instead of the usual black background.
+
+> [!CAUTION]
+> This was supposed to be the "Hello World" of Graphics Programming...
+> 
+> All of this just sweat just to do "*Hello World*"!?!
 
 ---
 
