@@ -1,5 +1,5 @@
 ---
-id: Making A 3D-Renderer With Sokol
+id: Making A 3D Model Viewer With Sokol
 aliases: Following Tutorial By 'Coding with Sphere' - 3D Renderer in C using Sokol Library
 tags:
   - C
@@ -19,6 +19,10 @@ status: In-Progress
 		- [[#Initialise Graphics]]
 		- [[#Wait, What Are We Doing?]]
 		- [[#Going Back To It]]
+	- [[#Second Video Tutorial]]
+		- [[#Some Random Notes For Triangles And Stuff]]
+		- [[#Writing The Vertex Data]]
+		- [[#Writing Shaders]]
 
 ---
 
@@ -372,8 +376,8 @@ Here are all the steps that I took to create the GitHub Remote Repository:
 	- Check using `git submodule status`
 6. Add, Commit and Push
 7. Clone again using either:
-	- `git clone --recurse-submodules https://github.com/Sunhaoo/sokol-3D-renderer`
-	- `git clone --recurse-submodules git@github.com:Sunhaoo/sokol-3D-renderer`
+	- `git clone --recurse-submodules https://github.com/Sunhaloo/sokol-3D-model-viewer.git`
+	- `git clone --recurse-submodules git@github.com:Sunhaloo/sokol-3D-model-viewer.git`
 
 > [!WARNING]
 > If you simply clone **without** the `--recurse-submodules` flag, then you are going to see the `dependencies/sokol` *repository* is going to be empty...
@@ -562,6 +566,115 @@ void frame(void) {
 > This was supposed to be the "Hello World" of Graphics Programming...
 > 
 > All of this just sweat just to do "*Hello World*"!?!
+
+## Second Video Tutorial
+
+> [!NOTE] Resource(s)
+> 
+> - OpenGL "Hello Triangle": https://learnopengl.com/Getting-started/Hello-Triangle
+> - Reddit Posts:
+> 	- Why Triangles: https://www.reddit.com/r/explainlikeimfive/comments/okbs5d/eli5_why_computer_graphics_is_made_of_triangles/
+> 	- Fragment Shader: https://www.reddit.com/r/vulkan/comments/vx3i2z/confused_about_how_fragment_shaders_work/
+
+> "*Creating the first triangle... Its one of the hardest thing to do in Graphics Programming*"
+
+First of all what the hell is a triangle? What are we actually going to be creating and what are we going to have at the end ( *after watching this video tutorial* )?
+
+> [!NOTE]
+> Apparently this is the *actual* "Hello World" of graphics programming...
+
+### Some Random Notes For Triangles And Stuff
+
+Reading the OpenGL "Hello Triangle" page, we are going to have **convert** *3D coordinates* into *2D pixels* to fit on our screen.
+
+> Wait a second, what the actual fuck! Why did I not think of that at all... The screen is a 2D plane!!!
+
+A *triangle* in our case is not really about a *shape on the screen* and its more about **( three ) points of data** on our screen.
+
+> A *triangle* can also said to be a "*face*"!
+
+The main reason that we use **triangles** comes down to the *mathematical guarantee* and *hardware efficiency*. For example, the points for a triangle can be stored using a `Vector` and they are pretty small and fast to work with.
+
+Then the **GPU** is going to take all of these **3 points of data** and **translate** them into their *correct* **pixels** accordingly.
+
+> We programmers are mostly going to be working with the *vertex* and the *fragment shader*.
+
+> [!NOTE]
+> See the above resource of OpenGL "Hello Triangle" for images or simply search for something like "*vertex data to pixel*".
+
+> I think I am starting to *see* it... In games, everything is a triangle like the building and others...
+
+> [!IMPORTANT]
+> Why do we need to draw a triangle?
+> 
+> Drawing *the triangle* is going to allow us to touch upon every single part of the *rendering pipeline* and therefore, make us learn a lot about it.
+> 
+> > This is why this part is the **hardest** and maybe... Most rewarding ( *I am going to see about that* )!
+
+---
+
+### Writing The Vertex Data
+
+Given that we are going to be making *the triangle*, we are going to have first have get *build* the coordinates of each **vertices** of the triangle.
+
+Therefore, this is where we are going to create our **vertex data** whereby it is going to contain a list of $x$ and $y$ coordinates.
+
+> [!WARNING]
+> So different graphics systems / APIs have **different** *coordinates* systems.
+> 
+> > Do give this a read: https://ahmetburul.medium.com/coordinate-systems-of-3d-applications-guide-ddfa2194ed88
+> 
+> For examples as Coding with Sphere was showing us in the video; OpenGL places the origin in the center of our screen. This means that this weird system of having `(1.0, 1.0)` at the top, right corner and `(-1.0, -1.0)` at the bottom, left corner; means that its easier for making 3D things!
+
+- Update our `init` function to add our list of vertices:
+
+> This goes just after the `sg_setup` function!
+
+```C
+  // array to hold coordinates for triangle
+  float vertices[] = {
+      // x        y         z
+      0.0f,  0.5f,  0.0f, // top coordinate
+      0.5f,  -0.5f, 0.0f, // bottom right coordinate
+      -0.5f, -0.5f, 0.0f  // bottom left coordinate
+  };
+```
+
+- Visually this look something like this:
+
+![[OpenGL Hello Triangle Coordinates.png | 550]]
+
+Given that we now have created our data / list of coordinates, we need a way to *place* that data onto our GPU.
+
+Therefore, we need to allocate a bit of space on the GPU for *our* data and actually place is there via **memory address** ( *meaning "we" ( sokol give us the ability to ) are going to use pointers* ).
+
+Right now, our `vertices` data / array lives in our RAM memory and we need to send it our GPU's VRAM. Hence, we are going to have to ask the GPU to **allocate** space, copy the `vertices` data into that GPU's buffer and then write it to a *handle* / *variable* so that I can use it later.
+
+> This is how its going to look like in term of code...
+
+- Update our `state` struct:
+
+```C
+// state stucture for rendering
+static struct {
+  // action performed during a render pass
+  sg_pass_action pass_action;
+  // GPU bindings for drawing --> hold data for buffers, textures and more
+  sg_bindings bindings;
+} state;
+```
+
+- Add the following code below our `vertices` array to do the above things said:
+
+```C
+  // GPU buffer containing `vertices` / vertex data
+  state.bindings.vertex_buffers[0] = sg_make_buffer(&(sg_buffer_desc){
+      // place / initialise that buffer with our actual data
+      .data = SG_RANGE(vertices),
+  });
+```
+
+### Writing Shaders
 
 ---
 

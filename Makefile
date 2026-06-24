@@ -1,5 +1,5 @@
 # compiler to use
-CC = gcc
+CC = clang
 
 # check if we are on a Windows / Linux system
 ifeq ($(OS),Windows_NT)

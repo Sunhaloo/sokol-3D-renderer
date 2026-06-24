@@ -15,6 +15,8 @@
 static struct {
   // action performed during a render pass
   sg_pass_action pass_action;
+  // GPU bindings for drawing --> hold data for buffers, textures and more
+  sg_bindings bindings;
 } state;
 
 // function related to `sapp_run` and `sapp_desc`
@@ -25,6 +27,20 @@ void init(void) {
   sg_setup(&(sg_desc){
       // setup the environment ==> see line 5006 in 'sokol_gfx.h' for `struct`
       .environment = sglue_environment()});
+
+  // array to hold coordinates for triangle
+  float vertices[] = {
+      // x        y         z
+      0.0f,  0.5f,  0.0f, // top coordinate
+      0.5f,  -0.5f, 0.0f, // bottom right coordinate
+      -0.5f, -0.5f, 0.0f  // bottom left coordinate
+  };
+
+  // GPU buffer containing `vertices` / vertex data
+  state.bindings.vertex_buffers[0] = sg_make_buffer(&(sg_buffer_desc){
+      // place / initialise that buffer with our actual data
+      .data = SG_RANGE(vertices),
+  });
 
   // update the state
   // INFO: again my formatter is really weird WTF is this?
