@@ -676,6 +676,146 @@ static struct {
 
 ### Writing Shaders
 
+> [!BUG]
+> Our Graphics Cards / GPUs does **not** understand *plain* C-code. Therefore, we are going to have to choose a *language* to write our shader in.
+> 
+> Now, given that we have been using OpenGL... We are going to have to use it's own *shader language* as every graphics API has its **own** *shader language*.
+> 
+> > So what are we going to use?
+
+> [!NOTE]
+> So sokol address this through its `sokol-shdc` tool.
+> 
+> > Link to GitHub Repository `.md` file: https://github.com/floooh/sokol-tools/blob/master/docs/sokol-shdc.md
+> 
+> In this way, we are able to keep our program **cross-platform**... This allows us to write 'GLSL' code so that we can actually create / write our shaders that we need to.
+> 
+> > Link to Wikipedia: https://en.wikipedia.org/wiki/OpenGL_Shading_Language
+
+#### Get The "Tool" Binary
+
+- Clone the following *sokol tools* repository but **not** inside our model viewer repository:
+
+```bash
+# clone the sokol-tools-bin repository
+git clone git@github.com:floooh/sokol-tools-bin.git
+```
+
+- Then move the `sokol-tools-bin/bin/linux/sokol-shdc` file to the *root* of our repository:
+
+```bash
+# move the 'sokol-shdc' file to the root of MY repository
+cp sokol-shdc ~/GitHub/sokol-3D-model-viewer
+```
+
+> [!NOTE]
+> What is the `sokol-shdc`?
+> 
+> Basically it a tool that allows us to **translate** *Vulkan-style GLSL* into **multiple** target shader languages.
+> 
+> When we are going to do this *translation*; we are going to get a *single* C **header file** that contains the *backend* that we asked for.
+
+#### Write The Vertex and Fragment Shaders
+
+> [!NOTE]
+> - Reddit Post: https://www.reddit.com/r/GraphicsProgramming/comments/pg9dw8/getting_started_with_shaders_and_glsl/
+> - OpenGL Learning:
+> 	- https://learnopengl.com/Getting-started/Hello-Triangle
+> 	- https://learnopengl.com/Getting-started/Shaders
+
+- Go at the root of our repository and create the following directory and file:
+
+```bash
+# at the root of our repository
+mkdir -p assets/shaders && touch assets/shaders/triangle.glsl
+```
+
+- Hence, you should have something like this:
+
+```console
+ assets
+└──  shaders
+    └──  triangle.glsl
+```
+
+- This is what the code inside my `triangle.glsl` file currently looks like:
+
+```C
+/*
+   NOTE: some simple notes
+
+   - vertex shader is responsible for placing "data" / coordinates on screen
+   - fragment shader is responsible for "colouring" our pixels ( inside the points of data )
+   - each shader has its own entry point / `main` function
+   - we need to tell the `sokol-shdc` that this is a complete shader program with `@program`
+*/
+
+// beginning of vertex shader
+@vs vertex_shader
+
+// vertex shader take IN a single set of x, y and z coordinates at A time
+in vec3 pos;
+
+// main entry point / main function for vertex shader
+void main() {
+  // no transformation for coordinates ==> simply "place" them
+  // NOTE: `gl_Position` is of type `vec4` ==> need to convert `vec3` to `vec4`
+  gl_Position = vec4(pos, 0.0f);
+}
+
+// end of vertex shader
+@end
+
+// beginning of fragment shader
+@fs fragment_shader
+
+// outputs 'RGBA' value
+out vec4 frag_colour;
+
+// main entry point / main function for vertex shader
+void main() {
+  // INFO: hardcode colour for now ( some type of green - I think )
+  frag_colour = vec4(0.7f, 1.0f, 0.5f, 1.0);
+}
+
+// end of fragment shader
+@end
+
+// complete shader program with vertex and fragment shader
+@program triangle vertex_shader fragment_shader
+```
+
+- Compile the **header file** using `sokol-shdc` program:
+
+```bash
+# create the triangle shader C header file
+./sokol-shdc --input assets/shaders/triangle.glsl --output triangle_shader.h --slang glsl430:hlsl5:metal_macos
+```
+
+> [!TIP]
+> For more information about the things like `--slang` do head over to: https://github.com/floooh/sokol-tools/blob/master/docs/sokol-shdc.md#command-line-reference
+
+> [!NOTE]
+> Therefore, the following `--slang glsl430:hlsl5:metal_macos` means that:
+> 
+> - Desktop GL 4.3
+> - D3D11
+> - Metal on MacOS
+> 
+> > Windows Direct3D 11 Graphics: https://learn.microsoft.com/en-us/windows/win32/direct3d11/atoc-dx-graphics-direct3d-11
+
+> [!SUCCESS]
+> Running the `sokol-shdc` tool did output the following `triangle_shader.h` **header file** at the *root* of our repository!
+> 
+> ```console
+>  triangle_shader.h
+> ```
+> 
+> > Its a 300 line **header file** BTW... The `triangle.glsl` was only 42 lines of *code*!
+
+#### Use Inside Our C File / Program
+
+
 ---
 
 # Socials
