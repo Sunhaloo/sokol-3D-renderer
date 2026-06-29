@@ -34,10 +34,10 @@ void init(void) {
 
   // array to hold coordinates for triangle
   float vertices[] = {
-      // x        y         z
-      0.0f,  0.5f,  0.0f, // top coordinate
-      0.5f,  -0.5f, 0.0f, // bottom right coordinate
-      -0.5f, -0.5f, 0.0f  // bottom left coordinate
+      // x        y         z         red       green     blue
+      0.0f,  0.5f,  0.0f, 1.0f, 0.0f, 0.0f, // top coordinate
+      0.5f,  -0.5f, 0.0f, 0.0f, 1.0f, 0.0f, // bottom right coordinate
+      -0.5f, -0.5f, 0.0f, 0.0f, 0.0f, 1.0f, // bottom left coordinate
   };
 
   // GPU buffer containing `vertices` / vertex data
@@ -51,8 +51,12 @@ void init(void) {
       // pass in our shader
       .shader = sg_make_shader(triangle_shader_desc(sg_query_backend())),
       // make the GPU understand our `vertices` vertex data
-      .layout = {
-          .attrs = {[ATTR_triangle_pos].format = SG_VERTEXFORMAT_FLOAT3}}});
+      .layout = {.attrs = {
+                     // get the actual coordinate position
+                     [ATTR_triangle_pos].format = SG_VERTEXFORMAT_FLOAT3,
+                     // get the colour
+                     [ATTR_triangle_colour].format = SG_VERTEXFORMAT_FLOAT3,
+                 }}});
 
   // update the state
   // INFO: again my formatter is really weird WTF is this?
@@ -63,11 +67,11 @@ void init(void) {
                                      // change the colour
                                      .clear_value = {
                                          // red colour
-                                         0.35f,
+                                         0.15f,
                                          // green colour
-                                         0.35f,
+                                         0.15f,
                                          // blue colour
-                                         0.35f,
+                                         0.15f,
                                          // opacity
                                          1.0f,
                                      }}};

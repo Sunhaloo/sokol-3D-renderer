@@ -12,12 +12,20 @@
 
 // vertex shader take IN a single set of x, y and z coordinates at A time
 in vec3 pos;
+// vertex shader take IN a single set of red, green and blue colour at A time
+in vec3 colour;
+
+// need to pass that colour to `fragment_shader` ==> `vertex_shader` now has an output
+out vec3 out_vertex_shader_colour;
 
 // main entry point / main function for vertex shader
 void main() {
   // no transformation for coordinates ==> simply "place" them
   // NOTE: `gl_Position` is of type `vec4` ==> need to convert `vec3` to `vec4`
   gl_Position = vec4(pos, 1.0f);
+
+  // return colour from the vertex_shader
+  out_vertex_shader_colour = colour;
 }
 
 // end of vertex shader
@@ -26,13 +34,16 @@ void main() {
 // beginning of fragment shader
 @fs fragment_shader
 
+// get the colour from our `vertex_shader`
+in vec3 out_vertex_shader_colour;
+
 // outputs 'RGBA' value
 out vec4 frag_colour;
 
 // main entry point / main function for vertex shader
 void main() {
-  // INFO: hardcode colour for now ( some type of green - I think )
-  frag_colour = vec4(0.051, 0.988, 0.0, 0.8);
+  // INFO: hardcode colour from `vertices` array from 'main.c'
+  frag_colour = vec4(out_vertex_shader_colour, 1.0);
 }
 
 // end of fragment shader
