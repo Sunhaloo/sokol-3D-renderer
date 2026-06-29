@@ -12,12 +12,15 @@ else
   LIBS = -lX11 -lXi -lXcursor -lGL -lasound -ldl -lm -pthread
 endif
 
+# our neccessary includes for 'cglm'
+INCLUDES = -Idependencies/cglm/include
+
 # local development ==> compiling, running and deleting
 program: compile run clean
 
 # compile the program according to system
 compile:
-	@$(CC) main.c -Wall -Wextra $(LIBS) -o $(OUTPUT)
+	@$(CC) main.c -Wall -Wextra $(INCLUDES) $(LIBS) -o $(OUTPUT)
 
 # compile the program
 run:

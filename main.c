@@ -10,6 +10,8 @@
 #include "dependencies/sokol/sokol_gfx.h"
 // include the sokol header file --> helper functions for 'sokol_gfx.h' file
 #include "dependencies/sokol/sokol_glue.h"
+// include 'clgm' higly optimsed math library for 2D and 3D stuff
+#include "cglm/cglm.h"
 // include our shader for our triangle
 #include "triangle_shader.h"
 
