@@ -12,6 +12,8 @@
 #include "dependencies/sokol/sokol_glue.h"
 // include 'clgm' higly optimsed math library for 2D and 3D stuff
 #include "cglm/cglm.h"
+// include our newly created 'model.h' file
+#include "model.h"
 // include our shader for our triangle
 #include "triangle_shader.h"
 
@@ -23,6 +25,8 @@ static struct {
   sg_bindings bindings;
   // shader, vertex layout / positioning and render settings
   sg_pipeline pipeline;
+  // define our model to be rendered --> triangle transformation for every frame
+  model triangle;
 } state;
 
 // function related to `sapp_run` and `sapp_desc`
@@ -33,6 +37,9 @@ void init(void) {
   sg_setup(&(sg_desc){
       // setup the environment ==> see line 5006 in 'sokol_gfx.h' for `struct`
       .environment = sglue_environment()});
+
+  // setup the triangle's model default positioning, rotation and scaling
+  state.triangle = model_defaults();
 
   // array to hold coordinates for triangle
   float vertices[] = {
@@ -82,6 +89,13 @@ void init(void) {
 void frame(void) {
   // function to display at each render state ==> called once every frame
 
+  // move the triangle model back along the z-axis for the duration of the frame
+  state.triangle.position[2] -= sapp_frame_duration();
+  // rotate the triangle model along the y-axis for the duration of the frame
+  state.triangle.rotation[1] -= sapp_frame_duration();
+  // scale the triangle model along the x-axis for the duration of the frame
+  state.triangle.scale[0] += 0.01f * sapp_frame_duration();
+
   // define our 4x4 matrices for 3D "rendering"
   mat4 model_matrix, view_matrix, proj_matrix;
 
@@ -89,8 +103,23 @@ void frame(void) {
   // rotation, or any sort of that stuff
   glm_mat4_identity(model_matrix);
 
-  // move the actual model 2 units back on the z-axis
-  glm_translate(model_matrix, (vec3){0.0f, 0.0f, -2.0f});
+  // move the model using the "data" from model's default function
+  glm_translate(model_matrix, state.triangle.position);
+
+  // setup the rotation for each of the axes that we have
+
+  // x-axis
+  glm_rotate(model_matrix, state.triangle.rotation[0],
+             (vec3){1.0f, 0.0f, 0.0f});
+  // y-axis
+  glm_rotate(model_matrix, state.triangle.rotation[1],
+             (vec3){0.0f, 1.0f, 0.0f});
+  // z-axis
+  glm_rotate(model_matrix, state.triangle.rotation[2],
+             (vec3){0.0f, 0.0f, 1.0f});
+
+  // set the model's scale using data from the model's default function
+  glm_scale(model_matrix, state.triangle.scale);
 
   // similarly, we need to do the same thing for our view matrix ==> the camera
   glm_mat4_identity(view_matrix);
@@ -144,13 +173,12 @@ void frame(void) {
   // bind the GPU buffer to handle these vertex data
   sg_apply_bindings(&state.bindings);
 
-  // triangle parameters ( IDK what I am doing for the moment )
+  // sokol-shdc generated triangle params through 'triangle.glsl' uniform
   triangle_params_t params = {0};
 
   // combine all the "populated" matrix into one final matrix to pass to shader
   // basically matrix multiplication is going to happen here
-  // INFO: multiplies 'n' number of matrices, given array of matrices of length
-  // WARNING: not using `mvp` defined here but using one in `triangle_shader.h`
+  // INFO: multiplies n number of matrices, given array of matrices of length n
   glm_mat4_mulN((mat4 *[]){&proj_matrix, &view_matrix, &model_matrix}, 3,
                 params.mvp);
 

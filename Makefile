@@ -20,7 +20,7 @@ program: compile run clean
 
 # compile the program according to system
 compile:
-	@$(CC) main.c -Wall -Wextra $(INCLUDES) $(LIBS) -o $(OUTPUT)
+	@$(CC) main.c model.c -Wall -Wextra $(INCLUDES) $(LIBS) -o $(OUTPUT)
 
 # compile the program
 run:
