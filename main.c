@@ -90,10 +90,15 @@ void frame(void) {
   // function to display at each render state ==> called once every frame
 
   // move the triangle model back along the z-axis for the duration of the frame
-  state.triangle.position[2] -= sapp_frame_duration();
+  // INFO: this makes the model goes back
+  // state.triangle.position[2] -= sapp_frame_duration();
+
   // rotate the triangle model along the y-axis for the duration of the frame
+  // INFO: this makes the model rotate
   state.triangle.rotation[1] -= sapp_frame_duration();
+
   // scale the triangle model along the x-axis for the duration of the frame
+  // INFO: this makes the model bigger
   state.triangle.scale[0] += 0.01f * sapp_frame_duration();
 
   // define our 4x4 matrices for 3D "rendering"
@@ -108,9 +113,13 @@ void frame(void) {
   // similarly, we need to do the same thing for our view matrix ==> the camera
   glm_mat4_identity(view_mat);
 
-  // define the camera position ==> at the origin in the middle of our screen
+  /*
+   * define the camera position ==> at the origin in the middle of our screen
+   * additionally, move it back along the z-axis to be able to see the model
+   *
+   */
   // INFO: see OpenGL's coordinate system to learn more
-  vec3 eye = {0.0f, 0.0f, 0.0f};
+  vec3 eye = {0.0f, 0.0f, 1.6f};
 
   // define the place where the camera is going to be looking at
   /*
@@ -139,13 +148,13 @@ void frame(void) {
   float aspect_ratio = window_width / window_height;
 
   // how "near" a vertex can be before its not seen
-  float near = 0.1f;
+  float near_plane = 0.1f;
 
   // how "far" a vertex can be before its not seen
-  float far = 100.0f;
+  float far_plane = 100.0f;
 
   // convert the 3D world and project it on a 2D screen
-  glm_perspective(fov, aspect_ratio, near, far, proj_mat);
+  glm_perspective(fov, aspect_ratio, near_plane, far_plane, proj_mat);
 
   // start the pass to display at each state
   sg_begin_pass(
